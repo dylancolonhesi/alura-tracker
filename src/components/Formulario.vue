@@ -37,6 +37,7 @@ import { useStore } from 'vuex'
 
 import { key } from '@/store'
 import { TipoNotificacao } from "@/interfaces/INotificacao";
+import { notificacaoMixin } from "@/mixins/notificar";
 
 export default defineComponent({
   name: "Formulario",
@@ -50,16 +51,13 @@ export default defineComponent({
       idProjeto: ''      
     }
   },
+  mixins: [notificacaoMixin],
   methods: {
     salvarTarefa (tempoEmSegundos: number) : void {    
       const projeto = this.projetos.find(proj => proj.id == this.idProjeto)
 
       if (!projeto) {
-        this.store.commit('NOTIFICAR', {
-          titulo: 'Ops!',
-          texto: 'Selecione um projeto antes de finalizar a tarefa!',
-          tipo: TipoNotificacao.FALHA
-        })
+        this.notificar(TipoNotificacao.FALHA, 'Ops!', 'Selecione um projeto para a tarefa!')
         return;
       }
 
