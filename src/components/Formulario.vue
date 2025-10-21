@@ -1,32 +1,30 @@
 <template>
-  <div class="box formulario">
+  <div class="box">
     <div class="columns">
-      <div
-        class="column is-5"
-        role="form"
-        aria-label="Formulário para criação de uma nova tarefa"
-      >
+      <div class="column is-5" role="form" aria-label="Formulário para iniciar uma nova tarefa">
         <input
-          type="text"
           class="input"
+          type="text"
           placeholder="Qual tarefa você deseja iniciar?"
           v-model="descricao"
         />
       </div>
       <div class="column is-3">
-        <select class="select" v-model="idProjeto">
-          <option disabled value="">Selecione um projeto (opcional)</option>
-          <option
-            v-for="projeto in projetos"
-            :key="projeto.id"
-            :value="projeto.id"
-          >
-            {{ projeto.nome }}
-          </option>
-        </select>
+        <div class="select">
+          <select v-model="idProjeto">
+            <option value="">Selecione o projeto</option>
+            <option
+              :value="projeto.id"
+              v-for="projeto in projetos"
+              :key="projeto.id"
+            >
+              {{ projeto.nome }}
+            </option>
+          </select>
+        </div>
       </div>
       <div class="column">
-        <Temporizador @aoTemporizadorFinalizado="finalizarTarefa"/>
+        <Temporizador @aoFinalizarTarefa="salvarTarefa"/>
       </div>
     </div>
   </div>
@@ -34,43 +32,60 @@
 
 <script lang="ts">
 import { computed, defineComponent } from "vue";
-import Temporizador from './Temporizador.vue'
-import { useStore } from "vuex";
-import { key } from "@/store";
+import Temporizador from "./Temporizador.vue";
+import { useStore } from 'vuex'
+
+import { key } from '@/store'
+import { TipoNotificacao } from "@/interfaces/INotificacao";
 
 export default defineComponent({
-  name: "Formulário",
+  name: "Formulario",
   emits: ['aoSalvarTarefa'],
   components: {
-    Temporizador
+    Temporizador,
   },
-  data () {
+  data () { 
     return {
       descricao: '',
-      idProjeto: ''
+      idProjeto: ''      
     }
   },
   methods: {
-    finalizarTarefa (tempoDecorrido: number) : void {
+    salvarTarefa (tempoEmSegundos: number) : void {    
+      const projeto = this.projetos.find(proj => proj.id == this.idProjeto)
+
+      if (!projeto) {
+        this.store.commit('NOTIFICAR', {
+          titulo: 'Ops!',
+          texto: 'Selecione um projeto antes de finalizar a tarefa!',
+          tipo: TipoNotificacao.FALHA
+        })
+        return;
+      }
+
       this.$emit('aoSalvarTarefa', {
-        duracaoEmSegundos: tempoDecorrido,
+        duracaoEmSegundos: tempoEmSegundos,
         descricao: this.descricao,
-        projeto: this.projetos.find(projeto => projeto.id === this.idProjeto)
+        projeto: projeto
       })
       this.descricao = ''
     }
   },
-  setup() {
-    const store = useStore(key);
+  setup () {
+    const store = useStore(key)
     return {
-      projetos: computed(() => store.state.projetos)
-    };
+      projetos: computed(() => store.state.projetos),
+      store
+    }
   }
 });
 </script>
-<style>
-.formulario {
-  color: var(--texto-primario);
+<style scoped>
+.button {
+  margin-left: 8px;
+}
+.box {
   background-color: var(--bg-primario);
+  color: var(--texto-primario);
 }
 </style>

@@ -1,24 +1,26 @@
 <template>
-  <section class="projetos">
-    <h1>Projetos</h1>
-    <form @submit.prevent="adicionarProjeto">
+  <section>
+    <form @submit.prevent="salvar">
       <div class="field">
-        <label for="nomeDoProjeto" class="label">Nome do Projeto</label>
-        <input type="text" id="nomeDoProjeto" class="input" v-model="nomeDoProjeto">
+        <label for="nomeDoProjeto" class="label"> Nome do Projeto </label>
+        <input type="text" class="input" v-model="nomeDoProjeto" id="nomeDoProjet" />
       </div>
       <div class="field">
-        <button class="button" type="submit">Adicionar</button>
+        <button class="button" type="submit">Salvar</button>
       </div>
     </form>
   </section>
 </template>
 
 <script lang="ts">
-import { useStore } from '@/store';
-import { defineComponent } from 'vue';
+import { useStore } from "@/store";
+import { defineComponent } from "vue";
+
+import { ALTERA_PROJETO, ADICIONA_PROJETO, NOTIFICAR } from '@/store/tipo-mutacoes'
+import { TipoNotificacao } from "@/interfaces/INotificacao";
 
 export default defineComponent({
-  name: 'Formulario',
+  name: "Formulario",
   props: {
     id: {
       type: String
@@ -26,43 +28,49 @@ export default defineComponent({
   },
   mounted() {
     if (this.id) {
-      const projeto = this.store.state.projetos.find((p: any) => p.id === Number(this.id));
-      if (projeto) {
-        this.nomeDoProjeto = projeto.nome;
-      }
+      const projeto = this.store.state.projetos.find(proj => proj.id == this.id)
+      this.nomeDoProjeto = projeto?.nome || ''
     }
   },
   data() {
     return {
-      nomeDoProjeto: ''
-    }
+      nomeDoProjeto: ""
+    };
   },
   methods: {
-    adicionarProjeto() {
-      if (this.id) {
-        this.store.commit('ATUALIZAR_PROJETO', {
-          id: Number(this.id),
-          nome: this.nomeDoProjeto
-        });
-        this.$router.push('/projetos');
+    salvar() {
+
+      if (this.nomeDoProjeto === "") {
+        this.store.commit('NOTIFICAR', {
+          titulo: 'Ops!',
+          texto: 'Preencha o nome do projeto!',
+          tipo: TipoNotificacao.FALHA
+        })
         return;
       }
-      this.store.commit('ADICIONAR_PROJETO', this.nomeDoProjeto)
-      this.nomeDoProjeto = '';
-      this.$router.push('/projetos');
-    }
+
+      if (this.id) {
+        this.store.commit(ALTERA_PROJETO, {
+          id: this.id,
+          nome: this.nomeDoProjeto
+        })
+      } else {
+        this.store.commit(ADICIONA_PROJETO, this.nomeDoProjeto)
+      }
+      this.nomeDoProjeto = "";
+      this.store.commit(NOTIFICAR, {
+        titulo: 'Novo projeto foi salvo',
+        texto: 'Prontinho ;) seu projeto já está disponível.',
+        tipo: TipoNotificacao.SUCESSO
+      })
+      this.$router.push('/projetos')
+    },
   },
   setup() {
     const store = useStore()
     return {
-      store,
+      store
     }
   }
 });
 </script>
-
-<style scoped>
-.projetos {
-  padding: 1.25rem;
-}
-</style>
